@@ -31,9 +31,10 @@ pub fn update_gist(
         .set("accept", "application/vnd.github+json")
         .set("authorization", &format!("Bearer {github_token}"))
         .send_json(ureq::json!({
-            "gist_id": gist_id,
             "files": {
-                "gist": gist_content
+                "events.md": {
+                    "content": gist_content
+                }
             }
         }))
 }
