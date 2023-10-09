@@ -45,6 +45,14 @@ fn main() {
 
     debug!("Starting...");
 
+    debug!("Parsing environment variables");
+    dotenvy::dotenv()
+        .and_then(|path| {
+            debug!("Loaded .env file");
+            Ok(path)
+        })
+        .ok();
+
     // Extract GIST_ID, GH_USERNAME and GH_PAT from environment variables
     let gist_id = env::var("GIST_ID").expect("Env var `GIST_ID` must be set");
     let gh_username = env::var("GH_USERNAME").expect("Env var `GH_USERNAME` must be set");
