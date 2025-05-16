@@ -7,6 +7,10 @@ use structs::GithubEvents;
 use tracing::{debug, info};
 use utils::truncate_string;
 
+/// Up to 300 events made in the last 30 days will be included
+/// https://docs.github.com/en/rest/activity/events?apiVersion=2022-11-28#about-github-events
+const MAX_PAGE: u16 = 3;
+
 fn main() {
     tracing_subscriber::fmt::init();
 
@@ -25,15 +29,19 @@ fn main() {
     debug!("Finished parsing environment variables");
     debug!("Getting activity for {}", &gh_username);
 
-    let activities = ureq::get(format!(
-        "https://api.github.com/users/{gh_username}/events?per_page=100",
-    ))
-    .header("accept", "application/vnd.github+json")
-    .call()
-    .expect("Failed to get public events")
-    .body_mut()
-    .read_json::<Vec<GithubEvents>>()
-    .expect("Failed to parse public events");
+    let mut activities = Vec::new();
+    for page in 1..MAX_PAGE {
+        let paged_activity = ureq::get(format!(
+            "https://api.github.com/users/{gh_username}/events/public?per_page=100&page={page}",
+        ))
+        .header("accept", "application/vnd.github+json")
+        .call()
+        .expect("Failed to get public events")
+        .body_mut()
+        .read_json::<Vec<GithubEvents>>()
+        .expect("Failed to parse public events");
+        activities.extend_from_slice(&paged_activity)
+    }
 
     info!("Found {} activities", activities.len());
 
